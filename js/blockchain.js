@@ -1,11 +1,8 @@
-const crypto = require("crypto");
-
-
 class Blockchain {
     constructor() {
         this.chain = [];
         this.pendingTransactions = [];
-        this.newBlock();
+        this.newBlock(null);
         this.peers = new Set();
     }
 
@@ -25,14 +22,16 @@ class Blockchain {
 
     /**
      * Creates a new block containing any outstanding transactions
+     *
+     * @param previousHash: the hash of the previous block (hex string)
      */
-    newBlock(previousHash, nonce = null) {
+    newBlock(previousHash) {
         let block = {
             index: this.chain.length,
             timestamp: new Date().toISOString(),
             transactions: this.pendingTransactions,
             previousHash,
-            nonce
+            nonce: null
         };
 
         block.hash = Blockchain.hash(block);
@@ -68,7 +67,14 @@ class Blockchain {
      * @param difficulty: an integer defining the difficulty
      */
     static powIsAcceptable(hashOfBlock, difficulty) {
-        return hashOfBlock.slice(0, difficulty) === "0".repeat(difficulty);
+        // Create a bitmask with the difficulty number of 0s
+        const difficultyBitmask = (1 << difficulty) - 1;
+
+        // Convert the hash to a big integer
+        const hashBigInteger = BigInt(hashOfBlock, 16);
+
+        // Return true if the hash is less than the difficulty bitmask
+        return hashBigInteger < difficultyBitmask;
     }
 
     /**
